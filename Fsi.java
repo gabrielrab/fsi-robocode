@@ -23,6 +23,10 @@ public class Fsi extends TeamRobot
 	public boolean isBorderGuard(String rival) {
 		return rival.contains("BorderGuard");
 	}
+	
+	public boolean isTeam(String rival) {
+		return rival.contains("Fsi");
+	}
 
 	public boolean moveToSafeArea() {
 		double x = getX();
@@ -35,12 +39,14 @@ public class Fsi extends TeamRobot
 			out.println("[X - 200] Dentro da zona de perigo");
 			rival = null;
 			back(200);
+			return isSafe;
 
 		} else if (x >= 800) {
 			isSafe = false;
 			out.println("[X - 800] Dentro da zona de perigo");
 			rival = null;
 			back(200);
+			return isSafe;
 		}
 
 		if (y <= 200) {
@@ -48,14 +54,15 @@ public class Fsi extends TeamRobot
 			out.println("[y - 200] Dentro da zona de perigo");
 			rival = null;
 			back(200);
+			return isSafe;
 		} else if (y >= 800) {
 			isSafe = false;
 			out.println("[y - 800] Dentro da zona de perigo");
 			rival = null;
 			back(200);
+			return isSafe;
 		}
-		scan();
-		return isSafe;
+		return true;
 	}
 	
 	public void run() {
@@ -65,11 +72,12 @@ public class Fsi extends TeamRobot
 		rival = null; // Initialize to not tracking anyone
 		setAdjustGunForRobotTurn(true); // Keep the gun still when we turn
 		gunTurnAmt = 10; // Initialize gunTurn to 10
+		
+		moveToSafeArea();
+		scan();
 
 		// Robot main loop
 		while(true) {
-			moveToSafeArea();
-
 			// turn the Gun (looks for enemy)
 			turnGunRight(gunTurnAmt);
 			// Keep track of how long we've been looking
@@ -85,16 +93,11 @@ public class Fsi extends TeamRobot
 			// If we *still* haven't seen our target after 10 turns, find another target
 			if (count > 11) {
 				rival = null;
+				scan();
+				continue;
 			}
-
-			// Verifica se há colisão com o muro
-            if (getX() <= 0 || getX() >= getBattleFieldWidth() || getY() <= 0 || getY() >= getBattleFieldHeight()) {
-				out.println("funcao do gpt");
-                // Faz o robô girar e sair do muro
-                turnRight(90);
-                ahead(100);
-            }
-
+			moveToSafeArea();
+			scan();
 		}
 
 	}
@@ -109,7 +112,7 @@ public class Fsi extends TeamRobot
 			return;
 		}
 
-		if (isBorderGuard(e.getName())) {
+		if (isBorderGuard(e.getName()) || isTeam(e.getName())) {
 			rival = null;
 			out.println("[No scan] Estou gastando energia atoa...");
 			return;
@@ -131,7 +134,7 @@ public class Fsi extends TeamRobot
 			turnGunRight(gunTurnAmt); // Try changing these to setTurnGunRight,
 			turnRight(e.getBearing()); // and see how much Tracker improves...
 			// (you'll have to make Tracker an AdvancedRobot)
-			ahead(e.getDistance() - 140);
+			ahead(e.getDistance() - 100);
 			return;
 		}
 
@@ -169,17 +172,19 @@ public class Fsi extends TeamRobot
 	 * onHitWall: What to do when you hit a wall
 	 */
 	public void onHitWall(HitWallEvent e) {
-		turnRight(180);
-        ahead(200);
+		turnRight(90);
+        ahead(100);
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
+		
 		// Only print if he's not already our target.
 		if (rival != null && !rival.equals(e.getName())) {
-			out.println("Cosplay do RJ, bala perdida no: " + e.getName());
+			fire(1);
+			back(60);
 		}
 
-		if (isBorderGuard(e.getName())) {
+		if (isBorderGuard(e.getName()) || isTeam(e.getName())) {
 			rival = null;
 			out.println("[No hit] Estou gastando energia atoa...");
 			return;
@@ -194,7 +199,7 @@ public class Fsi extends TeamRobot
 		gunTurnAmt = normalRelativeAngleDegrees(e.getBearing() + (getHeading() - getRadarHeading()));
 		turnGunRight(gunTurnAmt);
 		fire(3);
-		back(50);
+		back(70);
 	}
 			
 }
