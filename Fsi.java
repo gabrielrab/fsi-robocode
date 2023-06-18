@@ -96,8 +96,7 @@ public class Fsi extends TeamRobot
 				scan();
 				continue;
 			}
-			moveToSafeArea();
-			scan();
+			
 		}
 
 	}
@@ -134,7 +133,7 @@ public class Fsi extends TeamRobot
 			turnGunRight(gunTurnAmt); // Try changing these to setTurnGunRight,
 			turnRight(e.getBearing()); // and see how much Tracker improves...
 			// (you'll have to make Tracker an AdvancedRobot)
-			ahead(e.getDistance() - 100);
+			ahead(e.getDistance() - 150);
 			return;
 		}
 
@@ -146,9 +145,9 @@ public class Fsi extends TeamRobot
 		// Our target is too close!  Back up.
 		if (e.getDistance() < 100) {
 			if (e.getBearing() > -90 && e.getBearing() <= 90) {
-				back(40);
+				back(50);
 			} else {
-				ahead(40);
+				ahead(50);
 			}
 		}
 		scan();
@@ -159,13 +158,20 @@ public class Fsi extends TeamRobot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
-		out.println("aiii aiiii");
+		if (rival != null) {
+			scan();
+			return;
+		} 
+
 		if (moveToSafeArea()) {
 			turnRight(90);
+			back(50);
 			turnLeft(180);
-			ahead(100);
+			ahead(50);
+			return;
 		}
 		
+
 	}
 	
 	/**
@@ -200,6 +206,13 @@ public class Fsi extends TeamRobot
 		turnGunRight(gunTurnAmt);
 		fire(3);
 		back(70);
+	}
+	
+	public void onWin(WinEvent e) {
+		for (int i = 0; i < 50; i++) {
+			turnRight(30);
+			turnLeft(30);
+		}
 	}
 			
 }
