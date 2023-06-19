@@ -7,7 +7,7 @@ import static robocode.util.Utils.normalRelativeAngleDegrees;
 // API help : https://robocode.sourceforge.io/docs/robocode/robocode/Robot.html
 
 /**
- * Fsi - a robot by (your name here)
+ * Fsi - a robot by (Gabriel Rabelo, Arthur Henrique, João Vitor Brandão, Gabriel Cavalcante)
  */
 public class Fsi extends TeamRobot
 {
@@ -17,7 +17,7 @@ public class Fsi extends TeamRobot
 	String rival;
 
 	public void setSkin() {
-		setColors(Color.red,Color.blue,Color.white); // body,gun,radar
+		setColors(Color.red,Color.blue,Color.white);
 	}
 	
 	public boolean isBorderGuard(String rival) {
@@ -69,28 +69,25 @@ public class Fsi extends TeamRobot
 		setSkin();
 		
 		// Prepara a arma
-		rival = null; // Initialize to not tracking anyone
-		setAdjustGunForRobotTurn(true); // Keep the gun still when we turn
-		gunTurnAmt = 10; // Initialize gunTurn to 10
+		rival = null; // Começa iniciando o rival como nulo
+		setAdjustGunForRobotTurn(true);
+		gunTurnAmt = 10;
 		
 		moveToSafeArea();
 		scan();
 
-		// Robot main loop
 		while(true) {
-			// turn the Gun (looks for enemy)
+			// Inicia a movimentação do canhão
 			turnGunRight(gunTurnAmt);
-			// Keep track of how long we've been looking
 			count++;
-			// If we've haven't seen our target for 2 turns, look left
+			// Faz uma oscilação da arma
 			if (count > 2) {
 				gunTurnAmt = -10;
 			}
-			// If we still haven't seen our target for 5 turns, look right
 			if (count > 5) {
 				gunTurnAmt = 10;
 			}
-			// If we *still* haven't seen our target after 10 turns, find another target
+			// se não encontrou ninguém, seta o rival como nulo para uma nova busca
 			if (count > 11) {
 				rival = null;
 				scan();
@@ -101,48 +98,41 @@ public class Fsi extends TeamRobot
 
 	}
 
-	/**
-	 * onScannedRobot: What to do when you see another robot
-	 */
+
 	public void onScannedRobot(ScannedRobotEvent e) {
-		// If we have a target, and this isn't it, return immediately
-		// so we can get more ScannedRobotEvents.
 		if (rival != null && !e.getName().equals(rival)) {
 			return;
 		}
 
+		// Verifica se é um oponente válido
 		if (isBorderGuard(e.getName()) || isTeam(e.getName())) {
 			rival = null;
 			out.println("[No scan] Estou gastando energia atoa...");
 			return;
 		}
 
-		// If we don't have a target, well, now we do!
+		// Marca um oponente
 		if (rival == null) {
 			rival = e.getName();
 			out.println("Seguindo o: " + rival);
 		}
 		
-
-		// This is our target.  Reset count (see the run method)
 		count = 0;
-		// If our target is too far away, turn and move toward it.
+
+		// movimentação quando o oponente está um pouco longe
 		if (e.getDistance() > 150) {
 			gunTurnAmt = normalRelativeAngleDegrees(e.getBearing() + (getHeading() - getRadarHeading()));
-
-			turnGunRight(gunTurnAmt); // Try changing these to setTurnGunRight,
-			turnRight(e.getBearing()); // and see how much Tracker improves...
-			// (you'll have to make Tracker an AdvancedRobot)
+			turnGunRight(gunTurnAmt);
+			turnRight(e.getBearing());
 			ahead(e.getDistance() - 150);
 			return;
 		}
 
-		// Our target is close.
+		// movimentação quando o oponente está perto
 		gunTurnAmt = normalRelativeAngleDegrees(e.getBearing() + (getHeading() - getRadarHeading()));
 		turnGunRight(gunTurnAmt);
 		fire(2);
 
-		// Our target is too close!  Back up.
 		if (e.getDistance() < 100) {
 			if (e.getBearing() > -90 && e.getBearing() <= 90) {
 				back(50);
@@ -153,16 +143,15 @@ public class Fsi extends TeamRobot
 		scan();
 	}
 
-	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
-	 */
+	// Quando fomos atingidos
 	public void onHitByBullet(HitByBulletEvent e) {
-		// Replace the next line with any behavior you would like
+		
 		if (rival != null) {
 			scan();
 			return;
 		} 
 
+		// Verifica se estamos na area de segurança
 		if (moveToSafeArea()) {
 			turnRight(90);
 			back(50);
@@ -174,40 +163,34 @@ public class Fsi extends TeamRobot
 
 	}
 	
-	/**
-	 * onHitWall: What to do when you hit a wall
-	 */
+	// Função que identifica colisão e inibe que fiquemos presos ao muro
 	public void onHitWall(HitWallEvent e) {
 		turnRight(90);
         ahead(100);
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
-		
-		// Only print if he's not already our target.
 		if (rival != null && !rival.equals(e.getName())) {
 			fire(1);
 			back(60);
 		}
 
+		// Não desperdiça energia 
 		if (isBorderGuard(e.getName()) || isTeam(e.getName())) {
 			rival = null;
 			out.println("[No hit] Estou gastando energia atoa...");
 			return;
 		}
 
-
-		// Set the target
+		// Marca como rival e realiza o ataque
 		rival = e.getName();
-		// Back up a bit.
-		// Note:  We won't get scan events while we're doing this!
-		// An AdvancedRobot might use setBack(); execute();
 		gunTurnAmt = normalRelativeAngleDegrees(e.getBearing() + (getHeading() - getRadarHeading()));
 		turnGunRight(gunTurnAmt);
 		fire(3);
 		back(70);
 	}
 	
+	// Dança da vitória
 	public void onWin(WinEvent e) {
 		for (int i = 0; i < 50; i++) {
 			turnRight(30);
